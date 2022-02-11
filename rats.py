@@ -8,6 +8,7 @@ import scipy.signal as signal
 import statsmodels.api as sm
 
 from netCDF4 import Dataset
+from time import perf_counter
 
 #-----------------------------------------------------------------------------
 
@@ -42,15 +43,26 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-i1 = 2000
-i2 = i1 + 41
-
 rootgrp = Dataset(file, "r", format="NETCDF3")
-
 tvar = rootgrp.variables['time']
-time = tvar[i1:i2] - tvar[0]
-
 bzvar = rootgrp.variables['bz_gsm']
+
+sam = 2
+
+if sam == 1:
+    # this is a pretty good time range for figures
+    i1 = 2000
+    i2 = i1 + 200
+    doplot = True
+elif sam == 2:
+   # full range of data: good for efficiency runs
+   i1 = 0
+   i2 = len(tvar)
+   doplot = False
+else:
+    i1 = 2000; i2 = i1 + 200 # sam1
+
+time = tvar[i1:i2] - tvar[0]
 bz = bzvar[i1:i2].copy()
 
 #-----------------------------------------------------------------------------
@@ -63,7 +75,10 @@ ns = len(time)
 nw = 4
 
 # na is the length of the averaged variable
-na = int(ns / 4 + 1)
+if np.mod(ns,nw) == 0:
+    na = int(ns / nw)
+else:
+    na = int(ns / nw) + 1
 
 print(f"ns, na = {ns} {na}")
 
@@ -73,7 +88,7 @@ tbox = np.empty(na, dtype = float)
 for i in np.arange(na):
     i1 = i*nw
     i2 = np.min([i1+nw,ns])
-    print(f"{i1} {i2-1}")
+    #print(f"{i1} {i2-1}")
     mw = i2 - i1
     tbox[i] = 0.5*(time[i1] + time[i2-1])
 
@@ -82,16 +97,24 @@ for i in np.arange(na):
 
 bzbox = np.empty(na, dtype = float)
 
+tbox_start = perf_counter()
+
 for i in np.arange(na):
     i1 = i*nw
     i2 = np.min([i1+nw,ns])
     mw = i2 - i1
     bzbox[i] = np.sum(bz[i1:i2]) / mw
 
+tbox_stop = perf_counter()
+dtbox = tbox_stop - tbox_start
+
+
 #-----------------------------------------------------------------------------
 # Hodges-Lehmann estimator
 
 bzhl = np.empty(na, dtype = float)
+
+thl_start = perf_counter()
 
 # allocate work array
 nhl = int((nw*(nw+1))/2)
@@ -110,12 +133,17 @@ nhl2 = int((mw*(mw+1))/2)
 work2 = np.zeros(nhl2)
 bzhl[na-1] = HL(bz[i1:i2],work2,mw)
 
+thl_stop = perf_counter()
+dthl = thl_stop - thl_start
+
 #-----------------------------------------------------------------------------
 # M-estimator
 
-huber = sm.robust.scale.Huber()
-
 bzm = np.empty(na, dtype = float)
+
+tm_start = perf_counter()
+
+huber = sm.robust.scale.Huber()
 
 for i in np.arange(na):
     i1 = i*nw
@@ -125,14 +153,27 @@ for i in np.arange(na):
 
     bzm[i] = loc
 
+tm_stop = perf_counter()
+dtm = tm_stop - tm_start
+
+#-----------------------------------------------------------------------------
+# print timings in csv format for appending to a file
+
+print(80*"-"+"\nTimings")
+
+print("{0:18.6e}, {1:18.6e}, {2:18.6e}".format(dtbox, dthl, dtm))
+
+print(80*"-")
+
 #-----------------------------------------------------------------------------
 
-plt.plot(time,bz,'bo')
-plt.plot(tbox,bzbox,'k-')
-plt.plot(tbox,bzhl,'b-')
-plt.plot(tbox,bzm,'k:')
+if doplot:
 
-plt.show()
+    plt.plot(time,bz,'k-')
+    plt.plot(tbox,bzbox,linewidth=4,color='#808080')
+    plt.plot(tbox,bzhl,linewidth=4,color='#00FFFF')
+    plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
+    plt.show()
 
 #-----------------------------------------------------------------------------
 
