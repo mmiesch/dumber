@@ -5,6 +5,7 @@ Assess different averaging techniques
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
+import statsmodels.api as sm
 
 from netCDF4 import Dataset
 
@@ -88,7 +89,7 @@ for i in np.arange(na):
     bzbox[i] = np.sum(bz[i1:i2]) / mw
 
 #-----------------------------------------------------------------------------
-# HL estimator
+# Hodges-Lehmann estimator
 
 bzhl = np.empty(na, dtype = float)
 
@@ -110,10 +111,26 @@ work2 = np.zeros(nhl2)
 bzhl[na-1] = HL(bz[i1:i2],work2,mw)
 
 #-----------------------------------------------------------------------------
+# M-estimator
+
+huber = sm.robust.scale.Huber()
+
+bzm = np.empty(na, dtype = float)
+
+for i in np.arange(na):
+    i1 = i*nw
+    i2 = i1+nw
+
+    loc, scale = huber(bz[i1:i2])
+
+    bzm[i] = loc
+
+#-----------------------------------------------------------------------------
 
 plt.plot(time,bz,'bo')
 plt.plot(tbox,bzbox,'k-')
 plt.plot(tbox,bzhl,'b-')
+plt.plot(tbox,bzm,'k:')
 
 plt.show()
 
