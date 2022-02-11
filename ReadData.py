@@ -11,29 +11,28 @@ from scipy.io import netcdf
 # open file for reading
 
 dir = '/home/mark.miesch/data/DSCOVR/MAG/L1/'
-file = dir+'oe_vc1_dscovr_s20220131000000_e20220131235959_p20220201000011_pub.nc'
+
+# Feb 5
+file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc'
 
 # old school netcdf3 approach seems to work:
 
+dfile = netcdf.NetCDFFile(file,'r')
 
-xfile = netcdf.NetCDFFile(file,'r')
-data = xfile.variables['vc0Frames']
-x = data[:].copy().astype('float')
+tdata = dfile.variables['time']
+time = tdata[:].copy().astype('float')
 
-print(type(x))
+bzdata = dfile.variables['bz_gsm']
+bz = bzdata[:].copy().astype('float')
 
-print(f"min, max = {np.min(x)} {np.max(x)}")
-
-xfile.close()
+dfile.close()
 
 #-----------------------------------------------------------------------------
 
-j = 500
+i1 = 2000
+i2 = i1 + 400
 
-for i in np.arange(100):
-    print(x[i,j])
-
-plt.plot(x[:100,500])
+plt.plot(time[i1:i2],bz[i1:i2])
 
 plt.show()
 
