@@ -9,6 +9,28 @@ import scipy.signal as signal
 from netCDF4 import Dataset
 
 #-----------------------------------------------------------------------------
+
+def HL(x,w,n):
+    """
+    Hodges-Lehmann locaion estimator
+    To avoid the computational expense of re-allocating it each time, pass the
+    work array and size as arguments
+
+    x = input array of size n
+    w = work array of size n(n+1)/2
+    n = length of x
+    """
+
+    idx = 0
+    for j in np.arange(n):
+        for i in np.arange(j+1):
+            w[idx] = 0.5*(x[i]+x[j])
+            idx += 1
+
+    return np.median(w)
+
+
+#-----------------------------------------------------------------------------
 # open file for reading
 
 dir = '/home/mark.miesch/data/DSCOVR/MAG/L1/'
@@ -65,11 +87,33 @@ for i in np.arange(na):
     mw = i2 - i1
     bzbox[i] = np.sum(bz[i1:i2]) / mw
 
+#-----------------------------------------------------------------------------
+# HL estimator
+
+bzhl = np.empty(na, dtype = float)
+
+# allocate work array
+nhl = int((nw*(nw+1))/2)
+work = np.zeros(nhl)
+
+for i in np.arange(na-1):
+    i1 = i*nw
+    i2 = i1+nw
+    bzhl[i] = HL(bz[i1:i2],work,nw)
+
+# do the last bin seperately because it may not be the same size
+i1 = (na-1)*nw
+i2 = ns
+mw = i2 - i1
+nhl2 = int((mw*(mw+1))/2)
+work2 = np.zeros(nhl2)
+bzhl[na-1] = HL(bz[i1:i2],work2,mw)
 
 #-----------------------------------------------------------------------------
 
 plt.plot(time,bz,'bo')
 plt.plot(tbox,bzbox,'k-')
+plt.plot(tbox,bzhl,'b-')
 
 plt.show()
 
