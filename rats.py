@@ -47,18 +47,20 @@ rootgrp = Dataset(file, "r", format="NETCDF3")
 tvar = rootgrp.variables['time']
 bzvar = rootgrp.variables['bz_gsm']
 
-sam = 2
+sam = 1
 
 if sam == 1:
     # this is a pretty good time range for figures
+    label="DSCOVR_MAG"
     i1 = 2000
     i2 = i1 + 200
     doplot = True
 elif sam == 2:
-   # full range of data: good for efficiency runs
-   i1 = 0
-   i2 = len(tvar)
-   doplot = False
+    # full range of data: good for efficiency runs
+    label="DSCOVR_MAG"
+    i1 = 0
+    i2 = len(tvar)
+    doplot = False
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
@@ -157,13 +159,20 @@ tm_stop = perf_counter()
 dtm = tm_stop - tm_start
 
 #-----------------------------------------------------------------------------
-# print timings in csv format for appending to a file
+# print timings to a csv file
+
 
 print(80*"-"+"\nTimings")
-
+print("boxcar".center(21)+"HL".center(21)+"M-estimator".center(21))
 print("{0:18.6e}, {1:18.6e}, {2:18.6e}".format(dtbox, dthl, dtm))
-
 print(80*"-")
+
+# also write to a csv file
+outfilename = "timings/"+label+"_"+str(nw)+"_"+str(na)+".csv"
+
+outfile = open(outfilename,"a")
+outfile.write("{0:18.6e}, {1:18.6e}, {2:18.6e}\n".format(dtbox, dthl, dtm))
+outfile.close()
 
 #-----------------------------------------------------------------------------
 
