@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 import statsmodels.api as sm
+import scipy.optimize as opt
 
 from netCDF4 import Dataset
 from time import perf_counter
@@ -31,6 +32,16 @@ def HL(x,w,n):
 
     return np.median(w)
 
+def Huber_psi(mu,x,sigma,k=1.345):
+    r = (x - mu)/sigma
+    z = np.where(np.abs(r) <= k, r, np.sign(r)*k)
+    return np.sum(z)
+
+def Huber_psi_prime(mu,x,sigma,k=1.345):
+    r = (x - mu)/sigma
+    dr = -1.0/sigma
+    z = np.where(np.abs(r) <= k, dr, 0.0)
+    return np.sum(z)
 
 #-----------------------------------------------------------------------------
 # open file for reading
@@ -47,7 +58,7 @@ rootgrp = Dataset(file, "r", format="NETCDF3")
 tvar = rootgrp.variables['time']
 bzvar = rootgrp.variables['bz_gsm']
 
-sam = 1
+sam = 3
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -61,6 +72,12 @@ elif sam == 2:
     i1 = 0
     i2 = len(tvar)
     doplot = False
+if sam == 3:
+    # this is a pretty good time range for figures
+    label="DSCOVR_MAG"
+    i1 = 2000
+    i2 = i1 + 300
+    doplot = True
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
@@ -74,7 +91,8 @@ bz = bzvar[i1:i2].copy()
 ns = len(time)
 
 # nw is the length of the averaging window
-nw = 4
+#nw = 4
+nw = 8
 
 # na is the length of the averaged variable
 if np.mod(ns,nw) == 0:
@@ -145,13 +163,29 @@ bzm = np.empty(na, dtype = float)
 
 tm_start = perf_counter()
 
-huber = sm.robust.scale.Huber()
+#huber = sm.robust.scale.Huber(tol=1e-6, maxiter=1000)
+#try:
+#    for i in np.arange(na):
+#        i1 = i*nw
+#        i2 = i1+nw
+#    
+#        loc, scale = huber(bz[i1:i2])
+#    
+#        bzm[i] = loc
+#except:
+#
+#    print("STATSMOD FAILED: Using custom estimator")
 
 for i in np.arange(na):
     i1 = i*nw
     i2 = i1+nw
 
-    loc, scale = huber(bz[i1:i2])
+    x = bz[i1:i2]
+
+    scale = sm.robust.scale.mad(x)
+    mu0 = np.median(x)
+
+    loc = opt.newton(Huber_psi, mu0, fprime=Huber_psi_prime, args = (x, scale), tol=1.e-6)
 
     bzm[i] = loc
 
