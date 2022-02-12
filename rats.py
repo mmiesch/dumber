@@ -58,7 +58,7 @@ rootgrp = Dataset(file, "r", format="NETCDF3")
 tvar = rootgrp.variables['time']
 bzvar = rootgrp.variables['bz_gsm']
 
-sam = 3
+sam = 2
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -66,18 +66,29 @@ if sam == 1:
     i1 = 2000
     i2 = i1 + 200
     doplot = True
+    nw = 4
 elif sam == 2:
     # full range of data: good for efficiency runs
     label="DSCOVR_MAG"
     i1 = 0
-    i2 = len(tvar)
+    i2 = np.int64(len(tvar))
     doplot = False
-if sam == 3:
-    # this is a pretty good time range for figures
+    nw = 8
+elif sam == 3:
+    # For playing around 
     label="DSCOVR_MAG"
     i1 = 2000
     i2 = i1 + 300
     doplot = True
+    nw = 4
+elif sam == 4:
+    # a long run (equivalent to 6 hrs at 8 points/sec) 
+    # with a long window to make sure it's doing the Right Thing
+    label="DSCOVR_MAG"
+    i1 = 2000
+    i2 = i1 + 172800
+    doplot = True 
+    nw = 480
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
@@ -88,24 +99,20 @@ bz = bzvar[i1:i2].copy()
 # define bins
 
 # ns is the length of the sample
-ns = len(time)
-
-# nw is the length of the averaging window
-#nw = 4
-nw = 8
+ns = np.int64(len(time))
 
 # na is the length of the averaged variable
 if np.mod(ns,nw) == 0:
-    na = int(ns / nw)
+    na = np.int64(ns / nw)
 else:
-    na = int(ns / nw) + 1
+    na = np.int64(ns / nw) + 1
 
 print(f"ns, na = {ns} {na}")
 
 # define time at the center of each window
 tbox = np.empty(na, dtype = float)
 
-for i in np.arange(na):
+for i in np.arange(na,dtype=np.int64):
     i1 = i*nw
     i2 = np.min([i1+nw,ns])
     #print(f"{i1} {i2-1}")
@@ -119,7 +126,7 @@ bzbox = np.empty(na, dtype = float)
 
 tbox_start = perf_counter()
 
-for i in np.arange(na):
+for i in np.arange(na,dtype=np.int64):
     i1 = i*nw
     i2 = np.min([i1+nw,ns])
     mw = i2 - i1
@@ -140,7 +147,7 @@ thl_start = perf_counter()
 nhl = int((nw*(nw+1))/2)
 work = np.zeros(nhl)
 
-for i in np.arange(na-1):
+for i in np.arange(na-1,dtype=np.int64):
     i1 = i*nw
     i2 = i1+nw
     bzhl[i] = HL(bz[i1:i2],work,nw)
@@ -175,7 +182,7 @@ tm_start = perf_counter()
 #    
 #        bzm[i] = loc
 
-for i in np.arange(na):
+for i in np.arange(na,dtype=np.int64):
     i1 = i*nw
     i2 = i1+nw
 
@@ -201,7 +208,7 @@ print("{0:18.6e}, {1:18.6e}, {2:18.6e}".format(dtbox, dthl, dtm))
 print(80*"-")
 
 # also write to a csv file
-outfilename = "timings/"+label+"_"+str(nw)+"_"+str(na)+".csv"
+outfilename = "timings/"+label+"_"+str(nw)+"_"+str(ns)+".csv"
 
 outfile = open(outfilename,"a")
 outfile.write("{0:18.6e}, {1:18.6e}, {2:18.6e}\n".format(dtbox, dthl, dtm))
