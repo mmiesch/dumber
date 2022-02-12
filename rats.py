@@ -163,8 +163,10 @@ bzm = np.empty(na, dtype = float)
 
 tm_start = perf_counter()
 
+#
+#  This was having problems converging for nw greater than 4
+#
 #huber = sm.robust.scale.Huber(tol=1e-6, maxiter=1000)
-#try:
 #    for i in np.arange(na):
 #        i1 = i*nw
 #        i2 = i1+nw
@@ -172,9 +174,6 @@ tm_start = perf_counter()
 #        loc, scale = huber(bz[i1:i2])
 #    
 #        bzm[i] = loc
-#except:
-#
-#    print("STATSMOD FAILED: Using custom estimator")
 
 for i in np.arange(na):
     i1 = i*nw
