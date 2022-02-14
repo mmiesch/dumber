@@ -5,7 +5,6 @@ Assess different averaging techniques
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
-import statsmodels.api as sm
 import scipy.optimize as opt
 
 from netCDF4 import Dataset
@@ -33,6 +32,15 @@ def HL(x,w,n):
 
     return np.median(w)
 
+def MAD(x, c = 1.4826):
+    """
+    Median Absolute Deviation of a sample 
+    """
+
+    x0 = np.median(x)
+    y = x - x0
+    return c * np.median(y)
+
 def Huber_psi(mu,x,sigma,k=1.345):
     r = (x - mu)/sigma
     z = np.where(np.abs(r) <= k, r, np.sign(r)*k)
@@ -55,7 +63,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 1
+sam = 6
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -228,7 +236,7 @@ for i in np.arange(na,dtype=np.int64):
 
     x = bz[i1:i2]
 
-    scale = 1.4826 * sm.robust.scale.mad(x)
+    scale = MAD(x)
     mu0 = np.median(x)
 
     try:
