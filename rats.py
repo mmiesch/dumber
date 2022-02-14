@@ -55,7 +55,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 5
+sam = 7
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -89,9 +89,25 @@ elif sam == 4:
 elif sam == 5:
     # a first experiment with artificial data
     label="ART_Cauchy"
-    ns = 100
+    rseed = 584303
+    ns = 200
     nw = 4
     doplot = True
+elif sam == 6:
+    # atrificial data with a wider window
+    label="ART_Cauchy"
+    rseed = 73947652
+    ns = 800
+    nw = 8
+    doplot = True
+elif sam == 7:
+    # long run with artificial data to test timing, convergence
+    label="ART_Cauchy"
+    rseed = 73947652
+    ns = 1000000
+    nw = 480
+    doplot = False
+
 
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
@@ -115,6 +131,7 @@ else:
     time = np.linspace(0, t2, num = ns, endpoint = True, dtype='float')
 
     bz = np.cos(2*np.pi*time/t2)
+    np.random.seed(rseed)
     noise = cauchy.rvs(loc = 0.0, scale = 0.1, size = ns) 
     bz += noise
 
@@ -248,10 +265,19 @@ outfile.close()
 
 if doplot:
 
+    plt.figure(figsize=(12,6))
+
     plt.plot(time,bz,'k-')
-    plt.plot(tbox,bzbox,linewidth=4,color='#808080')
-    plt.plot(tbox,bzhl,linewidth=4,color='#00FFFF')
+    plt.plot(tbox,bzbox,linewidth=4,color='red')
+    plt.plot(tbox,bzhl,linewidth=6,color='blue')
     plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
+
+    plt.xlabel('time (arbitray units)')
+    plt.ylabel('signal (arbitrary units)')
+
+    if label == "ART_Cauchy":
+        plt.ylim(-4,4)
+
     plt.show()
 
 #-----------------------------------------------------------------------------
