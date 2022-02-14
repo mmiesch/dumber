@@ -38,7 +38,7 @@ def MAD(x, c = 1.4826):
     """
 
     x0 = np.median(x)
-    y = x - x0
+    y = np.abs(x - x0)
     return c * np.median(y)
 
 def Huber_psi(mu,x,sigma,k=1.345):
@@ -63,7 +63,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 6
+sam = 1
 
 if sam == 1:
     # this is a pretty good time range for figures
