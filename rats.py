@@ -89,6 +89,8 @@ elif sam == 4:
     i2 = i1 + 172800
     doplot = True 
     nw = 480
+elif sam == 5:
+
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
@@ -191,7 +193,14 @@ for i in np.arange(na,dtype=np.int64):
     scale = sm.robust.scale.mad(x)
     mu0 = np.median(x)
 
-    loc = opt.newton(Huber_psi, mu0, fprime=Huber_psi_prime, args = (x, scale), tol=1.e-6)
+    try:
+        loc = opt.newton(Huber_psi, mu0, fprime=Huber_psi_prime, args = (x, scale), tol=1.e-6)
+    except:
+        print("M-ESTIMATOR FAILED TO CONVERGE: DEFAULTING TO HL")
+        mw = i2 - i1
+        nhl = int(mw*(mw+1)/2)
+        work = np.empty(nhl)
+        loc = HL(x,work,mw)
 
     bzm[i] = loc
 
