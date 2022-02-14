@@ -10,6 +10,7 @@ import scipy.optimize as opt
 
 from netCDF4 import Dataset
 from time import perf_counter
+from scipy.stats import cauchy
 
 #-----------------------------------------------------------------------------
 
@@ -44,7 +45,7 @@ def Huber_psi_prime(mu,x,sigma,k=1.345):
     return np.sum(z)
 
 #-----------------------------------------------------------------------------
-# open file for reading
+# DSCOVR MAG file
 
 dir = '/home/mark.miesch/data/DSCOVR/MAG/L1/'
 
@@ -54,11 +55,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-rootgrp = Dataset(file, "r", format="NETCDF3")
-tvar = rootgrp.variables['time']
-bzvar = rootgrp.variables['bz_gsm']
-
-sam = 2
+sam = 5
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -71,7 +68,7 @@ elif sam == 2:
     # full range of data: good for efficiency runs
     label="DSCOVR_MAG"
     i1 = 0
-    i2 = np.int64(len(tvar))
+    i2 = -1
     doplot = False
     nw = 480
 elif sam == 3:
@@ -90,12 +87,36 @@ elif sam == 4:
     doplot = True 
     nw = 480
 elif sam == 5:
+    # a first experiment with artificial data
+    label="ART_Cauchy"
+    ns = 100
+    nw = 4
+    doplot = True
 
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
-time = tvar[i1:i2] - tvar[0]
-bz = bzvar[i1:i2].copy()
+if label == "DSCOVR_MAG":
+
+    rootgrp = Dataset(file, "r", format="NETCDF3")
+    tvar = rootgrp.variables['time']
+    bzvar = rootgrp.variables['bz_gsm']
+
+    if i2 < 0:
+       i2 = np.int64(len(tvar))
+
+    time = tvar[i1:i2] - tvar[0]
+    bz = bzvar[i1:i2].copy()
+
+else:
+
+    # Artificial data with a Cauchy distribution
+    t2 = float(ns)
+    time = np.linspace(0, t2, num = ns, endpoint = True, dtype='float')
+
+    bz = np.cos(2*np.pi*time/t2)
+    noise = cauchy.rvs(loc = 0.0, scale = 0.1, size = ns) 
+    bz += noise
 
 #-----------------------------------------------------------------------------
 # define bins
@@ -235,4 +256,6 @@ if doplot:
 
 #-----------------------------------------------------------------------------
 
-rootgrp.close()
+
+if label == "DSCOVR_MAG":
+    rootgrp.close()
