@@ -55,7 +55,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 7
+sam = 1
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -105,7 +105,7 @@ elif sam == 7:
     label="ART_Cauchy"
     rseed = 73947652
     ns = 1000000
-    nw = 480
+    nw = 4
     doplot = False
 
 
@@ -228,7 +228,7 @@ for i in np.arange(na,dtype=np.int64):
 
     x = bz[i1:i2]
 
-    scale = sm.robust.scale.mad(x)
+    scale = 1.483 * sm.robust.scale.mad(x)
     mu0 = np.median(x)
 
     try:
