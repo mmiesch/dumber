@@ -73,7 +73,7 @@ elif sam == 2:
     i1 = 0
     i2 = np.int64(len(tvar))
     doplot = False
-    nw = 8
+    nw = 480
 elif sam == 3:
     # For playing around 
     label="DSCOVR_MAG"
