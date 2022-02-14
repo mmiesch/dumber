@@ -228,7 +228,7 @@ for i in np.arange(na,dtype=np.int64):
 
     x = bz[i1:i2]
 
-    scale = 1.483 * sm.robust.scale.mad(x)
+    scale = 1.4826 * sm.robust.scale.mad(x)
     mu0 = np.median(x)
 
     try:
