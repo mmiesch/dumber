@@ -65,6 +65,10 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 
 sam = 1
 
+# default titles - change only if desired
+xtitle = 'time (arbitrary units)'
+ytitle = 'signal (arbitrary units)'
+
 if sam == 1:
     # this is a pretty good time range for figures
     label="DSCOVR_MAG"
@@ -72,6 +76,8 @@ if sam == 1:
     i2 = i1 + 200
     doplot = True
     nw = 4
+    xtitle = 'time (seconds)'
+    ytitle = 'Bz (nT)'
 elif sam == 2:
     # full range of data: good for efficiency runs
     label="DSCOVR_MAG"
@@ -129,7 +135,7 @@ if label == "DSCOVR_MAG":
     if i2 < 0:
        i2 = np.int64(len(tvar))
 
-    time = tvar[i1:i2] - tvar[0]
+    time = (tvar[i1:i2] - tvar[i1])*1.e-3
     bz = bzvar[i1:i2].copy()
 
 else:
@@ -280,8 +286,8 @@ if doplot:
     plt.plot(tbox,bzhl,linewidth=6,color='blue')
     plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
 
-    plt.xlabel('time (arbitray units)')
-    plt.ylabel('signal (arbitrary units)')
+    plt.xlabel(xtitle)
+    plt.ylabel(ytitle)
 
     if label == "ART_Cauchy":
         plt.ylim(-4,4)
