@@ -55,20 +55,35 @@ def Huber_psi_prime(mu,x,sigma,k=1.345):
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 1
+sam = 2
 
 # default titles - change only if desired
 xtitle = 'time (arbitrary units)'
 ytitle = 'signal (arbitrary units)'
 
+dorobust = True
+
 if sam == 1:
-    # atrificial data with a wider window
+    # for testing
     ns = 160
     nw = 8
     nb = nw
     #nb = 2*nw
     #nb = 3*nw
-    k = 12.0
+    #k = 12.0
+    #k = 16.2
+    k = 11.0
+elif sam == 2:
+    # wider window
+    nw = 480
+    ns = int(nw*20)
+    nb = nw
+    #nb = 2*nw
+    #nb = 3*nw
+    #k = 16.0
+    #k = 12.0
+    k = 22.0
+    dorobust = False
 else:
     print("pick a sam")
     exit()
@@ -123,64 +138,68 @@ for i in np.arange(na,dtype=np.int64):
 #-----------------------------------------------------------------------------
 # Hodges-Lehmann estimator
 
-bzhl = np.empty(na, dtype = float)
+if dorobust:
 
-# allocate work array
-nhl = int((nb*(nb+1))/2)
-work = np.zeros(nhl)
-
-for i in np.arange(1,na-1,dtype=np.int64):
-    i1 = i*nw - nov
-    i2 = i1 + nb
-
-    bzhl[i] = HL(bz[i1:i2],work,nb)
-
-# do the first and last bins seperately because they may not be the same size
-i1 = 0
-i2 = nw + nov
-mw = i2 - i1
-nhl2 = int((mw*(mw+1))/2)
-work2 = np.zeros(nhl2)
-bzhl[na-1] = HL(bz[i1:i2],work2,mw)
-
-i1 = (na-1)*nw
-i2 = ns
-mw = i2 - i1
-nhl2 = int((mw*(mw+1))/2)
-work2 = np.zeros(nhl2)
-bzhl[na-1] = HL(bz[i1:i2],work2,mw)
+    bzhl = np.empty(na, dtype = float)
+    
+    # allocate work array
+    nhl = int((nb*(nb+1))/2)
+    work = np.zeros(nhl)
+    
+    for i in np.arange(1,na-1,dtype=np.int64):
+        i1 = i*nw - nov
+        i2 = i1 + nb
+    
+        bzhl[i] = HL(bz[i1:i2],work,nb)
+    
+    # do the first and last bins seperately because they may not be the same size
+    i1 = 0
+    i2 = nw + nov
+    mw = i2 - i1
+    nhl2 = int((mw*(mw+1))/2)
+    work2 = np.zeros(nhl2)
+    bzhl[na-1] = HL(bz[i1:i2],work2,mw)
+    
+    i1 = (na-1)*nw
+    i2 = ns
+    mw = i2 - i1
+    nhl2 = int((mw*(mw+1))/2)
+    work2 = np.zeros(nhl2)
+    bzhl[na-1] = HL(bz[i1:i2],work2,mw)
 
 #-----------------------------------------------------------------------------
 # M-estimator
 
-bzm = np.empty(na, dtype = float)
+if dorobust:
 
-tm_start = perf_counter()
-
-for i in np.arange(na,dtype=np.int64):
-    i1 = i*nw - nov
-    i2 = i1 + nb
-    i1 = np.max([i1,0])
-    i2 = np.min([i2,ns])
-
-    x = bz[i1:i2]
-
-    scale = MAD(x)
-    mu0 = np.median(x)
-
-    try:
-        loc = opt.newton(Huber_psi, mu0, fprime=Huber_psi_prime, args = (x, scale), tol=1.e-6)
-    except:
-        print("M-ESTIMATOR FAILED TO CONVERGE: DEFAULTING TO HL")
-        mw = i2 - i1
-        nhl = int(mw*(mw+1)/2)
-        work = np.empty(nhl)
-        loc = HL(x,work,mw)
-
-    bzm[i] = loc
-
-tm_stop = perf_counter()
-dtm = tm_stop - tm_start
+    bzm = np.empty(na, dtype = float)
+    
+    tm_start = perf_counter()
+    
+    for i in np.arange(na,dtype=np.int64):
+        i1 = i*nw - nov
+        i2 = i1 + nb
+        i1 = np.max([i1,0])
+        i2 = np.min([i2,ns])
+    
+        x = bz[i1:i2]
+    
+        scale = MAD(x)
+        mu0 = np.median(x)
+    
+        try:
+            loc = opt.newton(Huber_psi, mu0, fprime=Huber_psi_prime, args = (x, scale), tol=1.e-6)
+        except:
+            print("M-ESTIMATOR FAILED TO CONVERGE: DEFAULTING TO HL")
+            mw = i2 - i1
+            nhl = int(mw*(mw+1)/2)
+            work = np.empty(nhl)
+            loc = HL(x,work,mw)
+    
+        bzm[i] = loc
+    
+    tm_stop = perf_counter()
+    dtm = tm_stop - tm_start
 
 #-----------------------------------------------------------------------------
 
@@ -202,8 +221,9 @@ plt.plot(xx,yy,'k:')
 plt.plot(time,bz,'k-')
 plt.plot(tbox,bzbox,linewidth=4,color='red')
 
-#plt.plot(tbox,bzhl,linewidth=6,color='blue')
-#plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
+if dorobust:
+    plt.plot(tbox,bzhl,linewidth=6,color='blue')
+    plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
 
 plt.xlim([0,np.max(time)])
 plt.ylim([-2,2])
