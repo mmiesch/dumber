@@ -2,6 +2,7 @@
 Assess different averaging techniques
 """
 
+from email.errors import NoBoundaryInMultipartDefect
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
@@ -51,6 +52,11 @@ def Huber_psi_prime(mu,x,sigma,k=1.345):
     dr = -1.0/sigma
     z = np.where(np.abs(r) <= k, dr, 0.0)
     return np.sum(z)
+
+def binrange(i, nw, nb, nov, ns):
+    i1 = np.max([i*nw-nov,0])
+    i2 = np.min([i1+nb,ns])
+    return i1, i2
 
 #-----------------------------------------------------------------------------
 # DSCOVR MAG file
@@ -108,7 +114,7 @@ elif sam == 5:
     nw = 4
     doplot = True
 elif sam == 6:
-    # atrificial data with a wider window
+    # artificial data with a wider window
     label="ART_Cauchy"
     rseed = 73947652
     ns = 800
@@ -155,6 +161,11 @@ else:
 # ns is the length of the sample
 ns = np.int64(len(time))
 
+# nb is the size if the averaging window
+# nov is the overlap with neighboring bins
+nb = 2*nw
+nov = int((nb - nw)/2)
+
 # na is the length of the averaged variable
 if np.mod(ns,nw) == 0:
     na = np.int64(ns / nw)
@@ -181,8 +192,7 @@ bzbox = np.empty(na, dtype = float)
 tbox_start = perf_counter()
 
 for i in np.arange(na,dtype=np.int64):
-    i1 = i*nw
-    i2 = np.min([i1+nw,ns])
+    i1, i2 = binrange(i, nw, nb, nov, ns)
     mw = i2 - i1
     bzbox[i] = np.sum(bz[i1:i2]) / mw
 
@@ -202,12 +212,18 @@ nhl = int((nw*(nw+1))/2)
 work = np.zeros(nhl)
 
 for i in np.arange(na-1,dtype=np.int64):
-    i1 = i*nw
-    i2 = i1+nw
+    i1, i2 = binrange(i, nw, nb, nov, ns)
     bzhl[i] = HL(bz[i1:i2],work,nw)
 
-# do the last bin seperately because it may not be the same size
-i1 = (na-1)*nw
+# do the first and last bin seperately because it may not be the same size
+i1 = 0
+i2 = nw + nov
+mw = i2 - i1
+nhl2 = int((mw*(mw+1))/2)
+work2 = np.zeros(nhl2)
+bzhl[na-1] = HL(bz[i1:i2],work2,mw)
+
+i1 = (na-1)*nw - nov
 i2 = ns
 mw = i2 - i1
 nhl2 = int((mw*(mw+1))/2)
@@ -237,9 +253,7 @@ tm_start = perf_counter()
 #        bzm[i] = loc
 
 for i in np.arange(na,dtype=np.int64):
-    i1 = i*nw
-    i2 = i1+nw
-
+    i1, i2 = binrange(i, nw, nb, nov, ns)
     x = bz[i1:i2]
 
     scale = MAD(x)
@@ -262,14 +276,13 @@ dtm = tm_stop - tm_start
 #-----------------------------------------------------------------------------
 # print timings to a csv file
 
-
 print(80*"-"+"\nTimings")
 print("boxcar".center(21)+"HL".center(21)+"M-estimator".center(21))
 print("{0:18.6e}, {1:18.6e}, {2:18.6e}".format(dtbox, dthl, dtm))
 print(80*"-")
 
 # also write to a csv file
-outfilename = "timings/"+label+"_"+str(nw)+"_"+str(ns)+".csv"
+outfilename = "timings/"+label+"_"+str(nw)+"-"+str(nb)+"_"+str(ns)+".csv"
 
 outfile = open(outfilename,"a")
 outfile.write("{0:18.6e}, {1:18.6e}, {2:18.6e}\n".format(dtbox, dthl, dtm))

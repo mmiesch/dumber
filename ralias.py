@@ -1,5 +1,5 @@
 """
-Assess different averaging techniques
+Assess aliasing and overlapping bins for different averaging techniques
 """
 
 import numpy as np
