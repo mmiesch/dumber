@@ -69,7 +69,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 1
+sam = 2
 
 # default titles - change only if desired
 xtitle = 'time (arbitrary units)'
