@@ -9,6 +9,8 @@ import scipy.optimize as opt
 
 from scipy.interpolate import interpolate as interp
 
+from scipy.fft import fft
+
 #-----------------------------------------------------------------------------
 
 # default titles - change only if desired
@@ -111,18 +113,61 @@ time3 = time2[2:len(time2)-2]
 b3 = b3[2:len(time2)-2]
 
 #-----------------------------------------------------------------------------
+# this plots the time series
 
-plt.figure(figsize=(30,6))
-
-plt.plot(time1,b1,'k-',linewidth=6)
-#plt.plot(time2,b2,'y-',linewidth=3)
-
-plt.plot(time3,b3,'y-',linewidth=3)
-
-
-plt.xlabel(xtitle)
-plt.ylabel(ytitle)
-
-plt.show()
+#plt.figure(figsize=(30,6))
+#
+#plt.plot(time1,b1,'k-',linewidth=6)
+##plt.plot(time2,b2,'y-',linewidth=3)
+#
+#plt.plot(time3,b3,'y-',linewidth=3)
+#
+#
+#plt.xlabel(xtitle)
+#plt.ylabel(ytitle)
+#
 
 #-----------------------------------------------------------------------------
+# this plots the power spectra and phase
+
+bhat1 = fft(b1)
+bhat2 = fft(b2)
+bhat3 = fft(b3)
+
+n1 = int(len(bhat1)/2)
+n2 = int(len(bhat2)/2)
+n3 = int(len(bhat3)/2)
+
+ps1 = np.absolute(bhat1[:n1])**2
+ps2 = np.absolute(bhat2[:n2])**2
+ps3 = np.absolute(bhat3[:n3])**2
+
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(20,6))
+
+ax[0].set_yscale("log")
+ax[0].plot(ps1,color='k')
+ax[0].plot(ps2,color='r')
+ax[0].plot(ps3,color='b')
+
+phase1 = np.angle(bhat1[:n1],deg=True)
+phase2 = np.angle(bhat2[:n2],deg=True)
+phase3 = np.angle(bhat3[:n3],deg=True)
+
+ax[1].plot(phase1,color='k')
+#ax[1].plot(phase2,color='r')
+ax[1].plot(phase3,color='b')
+
+#-----------------------------------------------------------------------------
+# phase of the peak mode
+
+imax1 = np.argmax(ps1)
+imax2 = np.argmax(ps2)
+imax3 = np.argmax(ps3)
+
+print(f"1: {imax1} {ps1[imax1]} {phase1[imax1]}")
+print(f"2: {imax2} {ps2[imax2]} {phase2[imax2]}")
+print(f"3: {imax3} {ps3[imax3]} {phase3[imax3]}")
+
+#-----------------------------------------------------------------------------
+
+plt.show()
