@@ -3,6 +3,7 @@ Explore problems and solutions with synchronization of data sets with nearly equ
 """
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 import scipy.optimize as opt
@@ -113,19 +114,33 @@ time3 = time2[2:len(time2)-2]
 b3 = b3[2:len(time2)-2]
 
 #-----------------------------------------------------------------------------
+# try applying a Bartlett window with scipy
+
+#b4, time4 = signal.resample(b1,t=time1,num=len(time2),window="bartlett")
+#for i in np.arange(len(time2)):
+#    print(f"{time2[i]} {time4[i]} {time4[i]-time2[i]}")
+
+num = int(len(time1)*dt1)
+b4, time4 = signal.resample(b1,t=time1,num=num,window="bartlett")
+for i in np.arange(1,len(time4)):
+    print(f"{time4[i]} {time4[i]-time4[i-1]}")
+
+print(f"MSM {len(time1)} {len(time4)}")
+
+#-----------------------------------------------------------------------------
 # this plots the time series
 
-#plt.figure(figsize=(30,6))
-#
-#plt.plot(time1,b1,'k-',linewidth=6)
-##plt.plot(time2,b2,'y-',linewidth=3)
-#
-#plt.plot(time3,b3,'y-',linewidth=3)
-#
-#
-#plt.xlabel(xtitle)
-#plt.ylabel(ytitle)
-#
+plt.figure(figsize=(30,6))
+
+plt.plot(time1,b1,'k-',linewidth=6)
+
+#plt.plot(time2,b2,'y-',linewidth=3)
+plt.plot(time4,b4,'y-',linewidth=3)
+
+plt.xlim([100,200])
+
+plt.xlabel(xtitle)
+plt.ylabel(ytitle)
 
 #-----------------------------------------------------------------------------
 # this plots the power spectra and phase
@@ -133,29 +148,35 @@ b3 = b3[2:len(time2)-2]
 bhat1 = fft(b1)
 bhat2 = fft(b2)
 bhat3 = fft(b3)
+bhat4 = fft(b4)
 
 n1 = int(len(bhat1)/2)
 n2 = int(len(bhat2)/2)
 n3 = int(len(bhat3)/2)
+n4 = int(len(bhat4)/2)
 
 ps1 = np.absolute(bhat1[:n1])**2
 ps2 = np.absolute(bhat2[:n2])**2
 ps3 = np.absolute(bhat3[:n3])**2
-
-fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(20,6))
-
-ax[0].set_yscale("log")
-ax[0].plot(ps1,color='k')
-ax[0].plot(ps2,color='r')
-ax[0].plot(ps3,color='b')
+ps4 = np.absolute(bhat4[:n4])**2
 
 phase1 = np.angle(bhat1[:n1],deg=True)
 phase2 = np.angle(bhat2[:n2],deg=True)
 phase3 = np.angle(bhat3[:n3],deg=True)
+phase4 = np.angle(bhat4[:n4],deg=True)
 
-ax[1].plot(phase1,color='k')
+
+#fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(20,6))
+#
+#ax[0].set_yscale("log")
+#ax[0].plot(ps1,color='k')
+#ax[0].plot(ps2,color='r')
+##ax[0].plot(ps3,color='b')
+#ax[0].plot(ps3,color='silver')
+#
+#ax[1].plot(phase1,color='k')
 #ax[1].plot(phase2,color='r')
-ax[1].plot(phase3,color='b')
+#ax[1].plot(phase4,color='silver')
 
 #-----------------------------------------------------------------------------
 # phase of the peak mode
@@ -163,10 +184,12 @@ ax[1].plot(phase3,color='b')
 imax1 = np.argmax(ps1)
 imax2 = np.argmax(ps2)
 imax3 = np.argmax(ps3)
+imax4 = np.argmax(ps4)
 
 print(f"1: {imax1} {ps1[imax1]} {phase1[imax1]}")
 print(f"2: {imax2} {ps2[imax2]} {phase2[imax2]}")
 print(f"3: {imax3} {ps3[imax3]} {phase3[imax3]}")
+print(f"4: {imax4} {ps4[imax4]} {phase4[imax4]}")
 
 #-----------------------------------------------------------------------------
 
