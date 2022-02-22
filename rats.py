@@ -69,7 +69,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 2
+sam = 8
 
 # default titles - change only if desired
 xtitle = 'time (arbitrary units)'
@@ -127,8 +127,13 @@ elif sam == 7:
     ns = 1000000
     nw = 4
     doplot = False
-
-
+elif sam == 8:
+    # Check smoothing with a sharp profile
+    label="ART_Shock"
+    rseed = 73947652
+    ns = 800
+    nw = 8
+    doplot = True
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
@@ -143,6 +148,19 @@ if label == "DSCOVR_MAG":
 
     time = (tvar[i1:i2] - tvar[i1])*1.e-3
     bz = bzvar[i1:i2].copy()
+
+elif label == "ART_Shock":
+    # Artificial data with a Cauchy distribution
+    t2 = float(ns)
+    time = np.linspace(0, t2, num = ns, endpoint = True, dtype='float')
+
+    beta = 2.0
+    tmax = np.max(time)
+    bz = 2*np.arctan(beta*(time-0.5*tmax))/np.pi
+    
+    #np.random.seed(rseed)
+    #noise = cauchy.rvs(loc = 0.0, scale = 0.1, size = ns) 
+    #bz += noise
 
 else:
 
@@ -163,7 +181,8 @@ ns = np.int64(len(time))
 
 # nb is the size if the averaging window
 # nov is the overlap with neighboring bins
-nb = 2*nw
+#nb = 2*nw
+nb = nw
 nov = int((nb - nw)/2)
 
 # na is the length of the averaged variable
@@ -208,12 +227,12 @@ bzhl = np.empty(na, dtype = float)
 thl_start = perf_counter()
 
 # allocate work array
-nhl = int((nw*(nw+1))/2)
+nhl = int((nb*(nb+1))/2)
 work = np.zeros(nhl)
 
 for i in np.arange(na-1,dtype=np.int64):
     i1, i2 = binrange(i, nw, nb, nov, ns)
-    bzhl[i] = HL(bz[i1:i2],work,nw)
+    bzhl[i] = HL(bz[i1:i2],work,nb)
 
 # do the first and last bin seperately because it may not be the same size
 i1 = 0
@@ -294,16 +313,30 @@ if doplot:
 
     plt.figure(figsize=(12,6))
 
-    plt.plot(time,bz,'k-')
-    plt.plot(tbox,bzbox,linewidth=4,color='red')
-    plt.plot(tbox,bzhl,linewidth=6,color='blue')
-    plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
+    if label == "ART_Shock":
+        
+        plt.plot(time,bz,'k-')
+        plt.plot(tbox,bzbox,linewidth=4,color='red')
+        plt.plot(tbox,bzhl,linewidth=8,color='blue')
+        plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
+    
+        plt.xlim(380,420)
+        plt.plot(time,bz,'o',color='black')
+        plt.plot(tbox,bzbox,'o',color='red')
+        plt.plot(tbox,bzhl,'o',color='blue')
+        plt.plot(tbox,bzm,'o',color='#B1FB17')
+
+    else:
+        plt.plot(time,bz,'k-')
+        plt.plot(tbox,bzbox,linewidth=4,color='red')
+        plt.plot(tbox,bzhl,linewidth=6,color='blue')
+        plt.plot(tbox,bzm,linewidth=4,color='#B1FB17')
+    
+        if label == "ART_Cauchy":
+            plt.ylim(-4,4)
 
     plt.xlabel(xtitle)
-    plt.ylabel(ytitle)
-
-    if label == "ART_Cauchy":
-        plt.ylim(-4,4)
+    plt.ylabel(ytitle) 
 
     plt.show()
 

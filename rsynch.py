@@ -15,7 +15,7 @@ from scipy.fft import fft
 #-----------------------------------------------------------------------------
 
 # default titles - change only if desired
-xtitle = 'time (arbitrary units)'
+xtitle = 'time (min)'
 ytitle = 'signal (arbitrary units)'
 
 #----------------------------------------------------------------------------- 
@@ -65,6 +65,9 @@ tmin -= t0
 tmax -= t0
 
 b1 = np.cos(2*np.pi*k*time1/tmax)
+
+# add an outlier
+#b1[150] = 100.0
 
 #-----------------------------------------------------------------------------
 # linear interpolation
@@ -125,19 +128,29 @@ b4, time4 = signal.resample(b1,t=time1,num=num,window="bartlett")
 for i in np.arange(1,len(time4)):
     print(f"{time4[i]} {time4[i]-time4[i-1]}")
 
-print(f"MSM {len(time1)} {len(time4)}")
-
 #-----------------------------------------------------------------------------
 # this plots the time series
 
-plt.figure(figsize=(30,6))
+plt.rc('font',size=20)
+
+fig = plt.figure(figsize=(30,6))
+#fig.tight_layout(pad=4,rect=(0.1,0.0,1,1))
 
 plt.plot(time1,b1,'k-',linewidth=6)
+plt.plot(time2,b2,color='orange',linewidth=3)
+plt.plot(time4,b4,color='blue',linewidth=3)
 
-#plt.plot(time2,b2,'y-',linewidth=3)
-plt.plot(time4,b4,'y-',linewidth=3)
+#plt.plot(time1,b1,'ko')
+#plt.plot(time2,b2,'o',color='silver')
+#plt.plot(time4,b4,'o',color='blue')
+
+xx = [np.min(time1),np.max(time2)]
+yy = [0,0]
+
+plt.plot(xx,yy,'k:')
 
 plt.xlim([100,200])
+plt.ylim([-1.5,1.5])
 
 plt.xlabel(xtitle)
 plt.ylabel(ytitle)
@@ -165,18 +178,22 @@ phase2 = np.angle(bhat2[:n2],deg=True)
 phase3 = np.angle(bhat3[:n3],deg=True)
 phase4 = np.angle(bhat4[:n4],deg=True)
 
-
 #fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(20,6))
+#
+#fig.tight_layout(pad=4,rect=(0.0,0.0,1,1))
 #
 #ax[0].set_yscale("log")
 #ax[0].plot(ps1,color='k')
-#ax[0].plot(ps2,color='r')
-##ax[0].plot(ps3,color='b')
-#ax[0].plot(ps3,color='silver')
+#ax[0].plot(ps2,color='orange')
+#ax[0].plot(ps4,color='blue')
+#ax[0].set_xlabel('frequency')
+#ax[0].set_ylabel('power')
 #
 #ax[1].plot(phase1,color='k')
-#ax[1].plot(phase2,color='r')
-#ax[1].plot(phase4,color='silver')
+#ax[1].plot(phase2,color='orange')
+#ax[1].plot(phase4,color='blue')
+#ax[1].set_xlabel('frequency')
+#ax[1].set_ylabel('phase (deg)')
 
 #-----------------------------------------------------------------------------
 # phase of the peak mode
