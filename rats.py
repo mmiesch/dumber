@@ -69,7 +69,7 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 8
+sam = 2
 
 # default titles - change only if desired
 xtitle = 'time (arbitrary units)'
@@ -181,8 +181,8 @@ ns = np.int64(len(time))
 
 # nb is the size if the averaging window
 # nov is the overlap with neighboring bins
-#nb = 2*nw
-nb = nw
+nb = 2*nw
+#nb = nw
 nov = int((nb - nw)/2)
 
 # na is the length of the averaged variable
