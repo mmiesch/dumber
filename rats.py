@@ -90,7 +90,7 @@ elif sam == 2:
     i1 = 0
     i2 = -1
     doplot = False
-    nw = 480
+    nw = 4
 elif sam == 3:
     # For playing around 
     label="DSCOVR_MAG"
@@ -104,7 +104,7 @@ elif sam == 4:
     label="DSCOVR_MAG"
     i1 = 2000
     i2 = i1 + 172800
-    doplot = True 
+    doplot = False
     nw = 480
 elif sam == 5:
     # a first experiment with artificial data
@@ -230,17 +230,24 @@ thl_start = perf_counter()
 nhl = int((nb*(nb+1))/2)
 work = np.zeros(nhl)
 
-for i in np.arange(na-1,dtype=np.int64):
+for i in np.arange(1,na-2,dtype=np.int64):
     i1, i2 = binrange(i, nw, nb, nov, ns)
     bzhl[i] = HL(bz[i1:i2],work,nb)
 
-# do the first and last bin seperately because it may not be the same size
+# do end bins seperately because they may not be the same size
 i1 = 0
 i2 = nw + nov
 mw = i2 - i1
 nhl2 = int((mw*(mw+1))/2)
 work2 = np.zeros(nhl2)
-bzhl[na-1] = HL(bz[i1:i2],work2,mw)
+bzhl[0] = HL(bz[i1:i2],work2,mw)
+
+i = na-2
+i1, i2 = binrange(i, nw, nb, nov, ns)
+mw = i2 - i1
+nhl2 = int((mw*(mw+1))/2)
+work2 = np.zeros(nhl2)
+bzhl[na-2] = HL(bz[i1:i2],work2,mw)
 
 i1 = (na-1)*nw - nov
 i2 = ns
