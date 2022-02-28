@@ -30,6 +30,7 @@ if np.mod(ns,nw) == 0:
 else:
     na = np.int64(ns / nw) + 1
 
+print(f"Na = {na}")
 
 file1 = 'timings/'+file1
 file2 = 'timings/'+file2

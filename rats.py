@@ -69,11 +69,13 @@ file = dir+'oe_mg1_dscovr_s20220205000000_e20220205235959_p20220206013755_pub.nc
 #-----------------------------------------------------------------------------
 #  get a data segment to work with
 
-sam = 2
+sam = 9
 
 # default titles - change only if desired
 xtitle = 'time (arbitrary units)'
 ytitle = 'signal (arbitrary units)'
+
+kk = 1.0
 
 if sam == 1:
     # this is a pretty good time range for figures
@@ -125,7 +127,7 @@ elif sam == 7:
     label="ART_Cauchy"
     rseed = 73947652
     ns = 1000000
-    nw = 4
+    nw = 480
     doplot = False
 elif sam == 8:
     # Check smoothing with a sharp profile
@@ -134,6 +136,14 @@ elif sam == 8:
     ns = 800
     nw = 8
     doplot = True
+elif sam == 9:
+    # Accuracy runs
+    label="ART_Cauchy"
+    rseed = 73947652
+    ns = 80000
+    kk = 10
+    nw = 480
+    doplot = False
 else:
     i1 = 2000; i2 = i1 + 200 # sam1
 
@@ -168,7 +178,7 @@ else:
     t2 = float(ns)
     time = np.linspace(0, t2, num = ns, endpoint = True, dtype='float')
 
-    bz = np.cos(2*np.pi*time/t2)
+    bz = np.cos(2*np.pi*kk*time/t2)
     np.random.seed(rseed)
     noise = cauchy.rvs(loc = 0.0, scale = 0.1, size = ns) 
     bz += noise
@@ -313,6 +323,38 @@ outfilename = "timings/"+label+"_"+str(nw)+"-"+str(nb)+"_"+str(ns)+".csv"
 outfile = open(outfilename,"a")
 outfile.write("{0:18.6e}, {1:18.6e}, {2:18.6e}\n".format(dtbox, dthl, dtm))
 outfile.close()
+
+#-----------------------------------------------------------------------------
+# Compute accuracy
+
+if label == "ART_Cauchy":
+
+    tmax = max(tbox)
+
+    # correct answer on the tbox grid
+    bzcheck = np.cos(2*np.pi*kk*tbox/tmax)
+
+    # sanity check
+    #plt.figure(figsize=(12,6))
+    #plt.plot(tbox,bzcheck)
+    ##plt.plot(tbox,bzbox)
+    ##plt.plot(tbox,bzhl)
+    #plt.plot(tbox,bzm)
+    #plt.ylim(-4,4)
+    #plt.show()
+
+    # make sure the lengths are the same
+    print(f"data lengths: {len(bzcheck)} {len(bzbox)} {len(bzhl)} {len(bzm)}")
+
+    dbox = np.abs(bzbox - bzcheck)
+    dhl = np.abs(bzhl - bzcheck)
+    dm = np.abs(bzm - bzcheck)
+
+    ebox = np.sum(dbox)/len(dbox)
+    ehl = np.sum(dhl)/len(dhl)
+    edm = np.sum(dm)/len(dm)
+
+    print(f"Accuracy: {ebox} {ehl} {edm}")
 
 #-----------------------------------------------------------------------------
 
